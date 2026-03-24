@@ -3,85 +3,15 @@ import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
-import { SWISS_CANTONS, CAR_MAKES } from "@/types";
+import { SWISS_CANTONS, CAR_MAKES, CAR_MODELS, CAR_COLORS } from "@/types";
+import { useLanguageStore } from "@/store/language";
 import Link from "next/link";
 import {
   Upload, X, ChevronRight, ChevronLeft, Car, Wrench,
   MapPin, DollarSign, FileText, Image as ImageIcon, Check,
   AlertCircle, Loader2
 } from "lucide-react";
-
-// Equipment options grouped by category
-const EQUIPMENT_GROUPS = [
-  {
-    label: "Sicherheit",
-    key: "safety",
-    items: [
-      { key: "abs", label: "ABS" },
-      { key: "esp", label: "ESP" },
-      { key: "airbag_front", label: "Frontairbags" },
-      { key: "airbag_side", label: "Seitenairbags" },
-      { key: "parking_sensors_rear", label: "Einparkhilfe hinten" },
-      { key: "parking_sensors_front", label: "Einparkhilfe vorne" },
-      { key: "reversing_camera", label: "Rückfahrkamera" },
-      { key: "lane_assist", label: "Spurhalteassistent" },
-      { key: "blind_spot", label: "Totwinkelassistent" },
-      { key: "adaptive_cruise", label: "Adaptiver Tempomat" },
-    ],
-  },
-  {
-    label: "Komfort",
-    key: "comfort",
-    items: [
-      { key: "climate_control", label: "Klimaanlage / Klima" },
-      { key: "seat_heating", label: "Sitzheizung" },
-      { key: "steering_heating", label: "Lenkradheizung" },
-      { key: "electric_seats", label: "Elektrische Sitze" },
-      { key: "electric_windows", label: "Elektrische Fensterheber" },
-      { key: "electric_mirrors", label: "Elektrische Spiegel" },
-      { key: "keyless_entry", label: "Keyless Entry" },
-      { key: "start_stop", label: "Start-Stopp-Automatik" },
-      { key: "tow_bar", label: "Anhängerkupplung (AHK)" },
-      { key: "roof_rack", label: "Dachreling" },
-    ],
-  },
-  {
-    label: "Infotainment",
-    key: "infotainment",
-    items: [
-      { key: "navigation", label: "Navigationssystem" },
-      { key: "bluetooth", label: "Bluetooth" },
-      { key: "apple_carplay", label: "Apple CarPlay" },
-      { key: "android_auto", label: "Android Auto" },
-      { key: "dab_radio", label: "DAB+ Radio" },
-      { key: "usb", label: "USB-Anschlüsse" },
-      { key: "wireless_charging", label: "Induktionsladen" },
-      { key: "head_up_display", label: "Head-Up-Display" },
-    ],
-  },
-  {
-    label: "Exterieur",
-    key: "exterior",
-    items: [
-      { key: "panorama_roof", label: "Panoramadach" },
-      { key: "sunroof", label: "Schiebedach" },
-      { key: "alloy_wheels", label: "Alufelgen" },
-      { key: "led_lights", label: "LED-Scheinwerfer" },
-      { key: "xenon_lights", label: "Xenon-Scheinwerfer" },
-      { key: "tinted_windows", label: "Getönte Scheiben" },
-      { key: "sport_package", label: "Sportpaket" },
-    ],
-  },
-];
-
-const STEPS = [
-  { id: 1, label: "Fahrzeug", icon: Car },
-  { id: 2, label: "Details", icon: Wrench },
-  { id: 3, label: "Ausstattung", icon: Check },
-  { id: 4, label: "Preis & Ort", icon: MapPin },
-  { id: 5, label: "Fotos", icon: ImageIcon },
-  { id: 6, label: "Beschreibung", icon: FileText },
-];
+import { useT } from "@/lib/i18n";
 
 const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all";
 const selectCls = inputCls;
@@ -89,23 +19,120 @@ const selectCls = inputCls;
 export default function CreateListingPage() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const t = useT();
+  const { lang } = useLanguageStore();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const fieldLabels: Record<string, string> = {
+    title: t("create_listing_title_label").replace(" *", ""),
+    make: t("create_make_label").replace(" *", ""),
+    model: t("create_model_label").replace(" *", ""),
+    year: t("create_year_label").replace(" *", ""),
+    price_chf: t("create_price_label").replace(" *", ""),
+    canton: t("create_canton_label").replace(" *", ""),
+    vehicle_type: t("create_vehicle_type_label").replace(" *", ""),
+    condition: t("create_condition_label"),
+    mileage_km: t("create_mileage_label"),
+    fuel_type: t("create_fuel_label"),
+    transmission: t("create_transmission_label"),
+    engine_cc: t("create_engine_label"),
+    power_kw: t("create_power_label"),
+    doors: t("create_doors_label"),
+    seats: t("create_seats_label"),
+    color: t("create_color_label"),
+    city: t("create_city_label"),
+  };
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
+  const EQUIPMENT_GROUPS = [
+    {
+      label: t("equip_safety"),
+      key: "safety",
+      items: [
+        { key: "abs", label: t("equip_abs") },
+        { key: "esp", label: t("equip_esp") },
+        { key: "airbag_front", label: t("equip_airbag_front") },
+        { key: "airbag_side", label: t("equip_airbag_side") },
+        { key: "parking_sensors_rear", label: t("equip_parking_rear") },
+        { key: "parking_sensors_front", label: t("equip_parking_front") },
+        { key: "reversing_camera", label: t("equip_reversing_camera") },
+        { key: "lane_assist", label: t("equip_lane_assist") },
+        { key: "blind_spot", label: t("equip_blind_spot") },
+        { key: "adaptive_cruise", label: t("equip_adaptive_cruise") },
+      ],
+    },
+    {
+      label: t("equip_comfort"),
+      key: "comfort",
+      items: [
+        { key: "climate_control", label: t("equip_climate") },
+        { key: "seat_heating", label: t("equip_seat_heating") },
+        { key: "steering_heating", label: t("equip_steering_heating") },
+        { key: "electric_seats", label: t("equip_electric_seats") },
+        { key: "electric_windows", label: t("equip_electric_windows") },
+        { key: "electric_mirrors", label: t("equip_electric_mirrors") },
+        { key: "keyless_entry", label: t("equip_keyless") },
+        { key: "start_stop", label: t("equip_start_stop") },
+        { key: "tow_bar", label: t("equip_tow_bar") },
+        { key: "roof_rack", label: t("equip_roof_rack") },
+      ],
+    },
+    {
+      label: t("equip_infotainment"),
+      key: "infotainment",
+      items: [
+        { key: "navigation", label: t("equip_navigation") },
+        { key: "bluetooth", label: t("equip_bluetooth") },
+        { key: "apple_carplay", label: t("equip_apple_carplay") },
+        { key: "android_auto", label: t("equip_android_auto") },
+        { key: "dab_radio", label: t("equip_dab_radio") },
+        { key: "usb", label: t("equip_usb") },
+        { key: "wireless_charging", label: t("equip_wireless_charging") },
+        { key: "head_up_display", label: t("equip_head_up") },
+      ],
+    },
+    {
+      label: t("equip_exterior"),
+      key: "exterior",
+      items: [
+        { key: "panorama_roof", label: t("equip_panorama_roof") },
+        { key: "sunroof", label: t("equip_sunroof") },
+        { key: "alloy_wheels", label: t("equip_alloy_wheels") },
+        { key: "led_lights", label: t("equip_led_lights") },
+        { key: "xenon_lights", label: t("equip_xenon_lights") },
+        { key: "tinted_windows", label: t("equip_tinted_windows") },
+        { key: "sport_package", label: t("equip_sport_package") },
+      ],
+    },
+  ];
+
+  const STEPS = [
+    { id: 1, label: t("create_step_vehicle"), icon: Car },
+    { id: 2, label: t("create_step_details"), icon: Wrench },
+    { id: 3, label: t("create_step_equipment"), icon: Check },
+    { id: 4, label: t("create_step_price"), icon: MapPin },
+    { id: 5, label: t("create_step_photos"), icon: ImageIcon },
+    { id: 6, label: t("create_step_description"), icon: FileText },
+  ];
+
+  const MONTHS = [
+    t("month_jan"), t("month_feb"), t("month_mar"), t("month_apr"),
+    t("month_may"), t("month_jun"), t("month_jul"), t("month_aug"),
+    t("month_sep"), t("month_oct"), t("month_nov"), t("month_dec"),
+  ];
+
   const [form, setForm] = useState({
-    // Step 1
     vehicle_type: "car",
     make: "",
     model: "",
     year: new Date().getFullYear(),
     condition: "used",
     body_type: "",
-    // Step 2
     mileage_km: "",
     fuel_type: "",
     transmission: "",
@@ -120,16 +147,13 @@ export default function CreateListingPage() {
     mfk_year: "",
     warranty: "",
     service_history: "",
-    // Step 3: equipment
     equipment: {} as Record<string, boolean>,
-    // Step 4
     price_chf: "",
     price_negotiable: false,
     leasing_available: false,
     warranty_included: false,
     canton: "",
     city: "",
-    // Step 6
     title: "",
     description: "",
   });
@@ -143,13 +167,11 @@ export default function CreateListingPage() {
       equipment: { ...f.equipment, [key]: !f.equipment[key] },
     }));
 
-  // Auto-generate title when make/model/year change
   const getAutoTitle = () => {
     const parts = [form.make, form.model, form.year].filter(Boolean);
     return parts.join(" ");
   };
 
-  // Image handling
   const addFiles = useCallback((files: FileList | null) => {
     if (!files) return;
     const valid = Array.from(files).filter((f) =>
@@ -171,18 +193,17 @@ export default function CreateListingPage() {
     addFiles(e.dataTransfer.files);
   };
 
-  // Validate current step before advancing
   const validateStep = (): string | null => {
     if (step === 1) {
-      if (!form.make) return "Bitte wählen Sie eine Marke";
-      if (!form.model) return "Bitte geben Sie ein Modell ein";
+      if (!form.make) return t("create_err_make");
+      if (!form.model) return t("create_err_model");
     }
     if (step === 4) {
-      if (!form.price_chf) return "Bitte geben Sie einen Preis ein";
-      if (!form.canton) return "Bitte wählen Sie einen Kanton";
+      if (!form.price_chf) return t("create_err_price");
+      if (!form.canton) return t("create_err_canton");
     }
     if (step === 6) {
-      if (!form.title) return "Bitte geben Sie einen Inserat-Titel ein";
+      if (!form.title) return t("create_err_title");
     }
     return null;
   };
@@ -242,7 +263,6 @@ export default function CreateListingPage() {
       const { data } = await api.post("/listings", payload);
       const listingId = data.id;
 
-      // Upload images if any
       if (imageFiles.length > 0) {
         const fd = new FormData();
         imageFiles.forEach((f) => fd.append("files", f));
@@ -253,8 +273,20 @@ export default function CreateListingPage() {
 
       router.push(`/listings/${listingId}`);
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { detail?: string } } };
-      setError(axiosError.response?.data?.detail || "Fehler beim Erstellen des Inserats");
+      const axiosError = err as { response?: { data?: { detail?: unknown } } };
+      const detail = axiosError.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        const messages = detail.map((e: { loc?: unknown[]; msg?: string }) => {
+          const field = String(e.loc?.find((x) => x !== "body" && typeof x === "string") ?? "");
+          const label = fieldLabels[field] || field;
+          return label ? `${label}: ${e.msg}` : (e.msg ?? t("create_error"));
+        });
+        setError(messages.join("\n"));
+      } else if (typeof detail === "string") {
+        setError(detail);
+      } else {
+        setError(t("create_error"));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -266,10 +298,10 @@ export default function CreateListingPage() {
         <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
           <Car className="w-8 h-8 text-primary-600" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Anmeldung erforderlich</h1>
-        <p className="text-gray-500 mb-6">Um ein Inserat aufzugeben, müssen Sie angemeldet sein.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("create_login_required")}</h1>
+        <p className="text-gray-500 mb-6">{t("create_login_required_sub")}</p>
         <Link href="/auth/login" className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors">
-          Jetzt anmelden
+          {t("create_login_btn")}
         </Link>
       </div>
     );
@@ -279,8 +311,8 @@ export default function CreateListingPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Inserat aufgeben</h1>
-        <p className="text-gray-400 text-sm mt-1">Kostenlos und in wenigen Minuten</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t("create_title")}</h1>
+        <p className="text-gray-400 text-sm mt-1">{t("create_subtitle")}</p>
       </div>
 
       {/* Step indicator */}
@@ -314,39 +346,43 @@ export default function CreateListingPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          {error}
+        <div className="flex gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            {error.split("\n").map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* STEP 1: Fahrzeug */}
+      {/* STEP 1 */}
       {step === 1 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 shadow-sm">
-          <h2 className="font-semibold text-gray-900 text-lg">Fahrzeuginformationen</h2>
+          <h2 className="font-semibold text-gray-900 text-lg">{t("create_s1_title")}</h2>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Fahrzeugtyp *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_vehicle_type_label")}</label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { v: "car", l: "Personenwagen" },
-                { v: "van", l: "Lieferwagen" },
-                { v: "truck", l: "Lastwagen" },
-                { v: "bus", l: "Bus" },
-                { v: "trailer", l: "Anhänger" },
-                { v: "agricultural", l: "Landwirtschaft" },
-              ].map((t) => (
+                { v: "car", l: t("cat_car") },
+                { v: "van", l: t("cat_van") },
+                { v: "truck", l: t("cat_truck") },
+                { v: "bus", l: t("cat_bus") },
+                { v: "trailer", l: t("cat_trailer") },
+                { v: "agricultural", l: t("cat_agri") },
+              ].map((vt) => (
                 <button
-                  key={t.v}
+                  key={vt.v}
                   type="button"
-                  onClick={() => set("vehicle_type", t.v)}
+                  onClick={() => set("vehicle_type", vt.v)}
                   className={`py-2.5 px-3 rounded-xl text-xs font-medium border-2 transition-all ${
-                    form.vehicle_type === t.v
+                    form.vehicle_type === vt.v
                       ? "border-primary-500 bg-primary-50 text-primary-700"
                       : "border-gray-200 text-gray-600 hover:border-gray-300"
                   }`}
                 >
-                  {t.l}
+                  {vt.l}
                 </button>
               ))}
             </div>
@@ -354,22 +390,35 @@ export default function CreateListingPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Marke *</label>
-              <select value={form.make} onChange={(e) => set("make", e.target.value)} className={selectCls} required>
-                <option value="">Marke wählen</option>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_make_label")}</label>
+              <select
+                value={form.make}
+                onChange={(e) => { set("make", e.target.value); set("model", ""); }}
+                className={selectCls}
+                required
+              >
+                <option value="">{t("create_make_select")}</option>
                 {CAR_MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
-                <option value="Andere">Andere</option>
+                <option value="Andere">{t("create_make_other")}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Modell *</label>
-              <input type="text" value={form.model} onChange={(e) => set("model", e.target.value)} className={inputCls} placeholder="z.B. 320d Touring" />
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_model_label")}</label>
+              {CAR_MODELS[form.make] ? (
+                <select value={form.model} onChange={(e) => set("model", e.target.value)} className={selectCls}>
+                  <option value="">{t("create_model_placeholder")}</option>
+                  {CAR_MODELS[form.make].map((m) => <option key={m} value={m}>{m}</option>)}
+                  <option value="Andere">{t("create_make_other")}</option>
+                </select>
+              ) : (
+                <input type="text" value={form.model} onChange={(e) => set("model", e.target.value)} className={inputCls} placeholder={t("create_model_placeholder")} />
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Jahrgang *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_year_label")}</label>
               <select value={form.year} onChange={(e) => set("year", Number(e.target.value))} className={selectCls}>
                 {Array.from({ length: 40 }, (_, i) => 2025 - i).map((y) => (
                   <option key={y} value={y}>{y}</option>
@@ -377,75 +426,75 @@ export default function CreateListingPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Zustand</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_condition_label")}</label>
               <select value={form.condition} onChange={(e) => set("condition", e.target.value)} className={selectCls}>
-                <option value="used">Gebraucht</option>
-                <option value="new">Neu</option>
-                <option value="damaged">Beschädigt / Unfall</option>
+                <option value="used">{t("cond_used")}</option>
+                <option value="new">{t("cond_new")}</option>
+                <option value="damaged">{t("cond_damaged")}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Karosserie</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_body_label")}</label>
             <select value={form.body_type} onChange={(e) => set("body_type", e.target.value)} className={selectCls}>
-              <option value="">— wählen</option>
-              <option value="limousine">Limousine</option>
-              <option value="kombi">Kombi</option>
-              <option value="suv">SUV / Geländewagen</option>
-              <option value="hatchback">Schrägheck</option>
-              <option value="coupe">Coupé</option>
-              <option value="cabrio">Cabriolet</option>
-              <option value="van">Van / Minivan</option>
-              <option value="pickup">Pick-up</option>
+              <option value="">{t("create_select")}</option>
+              <option value="limousine">{t("body_limousine")}</option>
+              <option value="kombi">{t("body_kombi")}</option>
+              <option value="suv">{t("body_suv")}</option>
+              <option value="hatchback">{t("body_hatchback")}</option>
+              <option value="coupe">{t("body_coupe")}</option>
+              <option value="cabrio">{t("body_cabrio")}</option>
+              <option value="van">{t("body_van_mini")}</option>
+              <option value="pickup">{t("body_pickup")}</option>
             </select>
           </div>
         </div>
       )}
 
-      {/* STEP 2: Details */}
+      {/* STEP 2 */}
       {step === 2 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 shadow-sm">
-          <h2 className="font-semibold text-gray-900 text-lg">Technische Details</h2>
+          <h2 className="font-semibold text-gray-900 text-lg">{t("create_s2_title")}</h2>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Kilometerstand</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_mileage_label")}</label>
               <div className="relative">
-                <input type="number" value={form.mileage_km} onChange={(e) => set("mileage_km", e.target.value)} className={inputCls + " pr-12"} placeholder="z.B. 85000" />
+                <input type="number" value={form.mileage_km} onChange={(e) => set("mileage_km", e.target.value)} className={inputCls + " pr-12"} placeholder={t("create_mileage_placeholder")} />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">km</span>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Treibstoff</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_fuel_label")}</label>
               <select value={form.fuel_type} onChange={(e) => set("fuel_type", e.target.value)} className={selectCls}>
-                <option value="">— wählen</option>
-                <option value="petrol">Benzin</option>
-                <option value="diesel">Diesel</option>
-                <option value="electric">Elektro</option>
-                <option value="hybrid">Hybrid (Vollhybrid)</option>
-                <option value="plugin_hybrid">Plug-in Hybrid</option>
-                <option value="lpg">Autogas (LPG)</option>
-                <option value="cng">Erdgas (CNG)</option>
-                <option value="hydrogen">Wasserstoff</option>
+                <option value="">{t("create_select")}</option>
+                <option value="petrol">{t("fuel_petrol")}</option>
+                <option value="diesel">{t("fuel_diesel")}</option>
+                <option value="electric">{t("fuel_electric")}</option>
+                <option value="hybrid">{t("fuel_hybrid_full")}</option>
+                <option value="plugin_hybrid">{t("fuel_plugin_hybrid")}</option>
+                <option value="lpg">{t("fuel_lpg_full")}</option>
+                <option value="cng">{t("fuel_cng_full")}</option>
+                <option value="hydrogen">{t("fuel_hydrogen")}</option>
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Getriebe</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_transmission_label")}</label>
               <select value={form.transmission} onChange={(e) => set("transmission", e.target.value)} className={selectCls}>
-                <option value="">— wählen</option>
-                <option value="manual">Schaltgetriebe</option>
-                <option value="automatic">Automatik</option>
-                <option value="semi_automatic">Halbautomatik / DSG</option>
+                <option value="">{t("create_select")}</option>
+                <option value="manual">{t("trans_manual")}</option>
+                <option value="automatic">{t("trans_automatic")}</option>
+                <option value="semi_automatic">{t("trans_semi_full")}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Hubraum</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_engine_label")}</label>
               <div className="relative">
-                <input type="number" value={form.engine_cc} onChange={(e) => set("engine_cc", e.target.value)} className={inputCls + " pr-12"} placeholder="z.B. 1995" />
+                <input type="number" value={form.engine_cc} onChange={(e) => set("engine_cc", e.target.value)} className={inputCls + " pr-12"} placeholder="1995" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">cm³</span>
               </div>
             </div>
@@ -453,21 +502,21 @@ export default function CreateListingPage() {
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Leistung</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_power_label")}</label>
               <div className="relative">
                 <input type="number" value={form.power_kw} onChange={(e) => set("power_kw", e.target.value)} className={inputCls + " pr-8"} placeholder="140" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">kW</span>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Türen</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_doors_label")}</label>
               <select value={form.doors} onChange={(e) => set("doors", e.target.value)} className={selectCls}>
                 <option value="">—</option>
                 {[2, 3, 4, 5, 6].map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Sitzplätze</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_seats_label")}</label>
               <select value={form.seats} onChange={(e) => set("seats", e.target.value)} className={selectCls}>
                 <option value="">—</option>
                 {[2, 3, 4, 5, 6, 7, 8, 9].map((s) => <option key={s} value={s}>{s}</option>)}
@@ -475,28 +524,49 @@ export default function CreateListingPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Farbe</label>
-              <input type="text" value={form.color} onChange={(e) => set("color", e.target.value)} className={inputCls} placeholder="z.B. Schwarz" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Lackierung</label>
-              <select value={form.color_type} onChange={(e) => set("color_type", e.target.value)} className={selectCls}>
-                <option value="">—</option>
-                <option value="uni">Unilack</option>
-                <option value="metallic">Metallic</option>
-                <option value="pearl">Perleffekt</option>
-                <option value="matte">Matt</option>
-              </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t("create_color_label")}</label>
+            <div className="grid grid-cols-6 gap-2">
+              {CAR_COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  title={lang === "de" ? c.label_de : c.label_en}
+                  onClick={() => set("color", lang === "de" ? c.label_de : c.label_en)}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
+                    form.color === c.label_de || form.color === c.label_en
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-100 hover:border-gray-300"
+                  }`}
+                >
+                  <span
+                    className="w-7 h-7 rounded-full border border-gray-200 shadow-sm flex-shrink-0"
+                    style={{ backgroundColor: c.hex }}
+                  />
+                  <span className="text-[10px] text-gray-500 leading-tight text-center">
+                    {lang === "de" ? c.label_de : c.label_en}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_paint_label")}</label>
+            <select value={form.color_type} onChange={(e) => set("color_type", e.target.value)} className={selectCls}>
+              <option value="">—</option>
+              <option value="uni">{t("paint_uni")}</option>
+              <option value="metallic">{t("paint_metallic")}</option>
+              <option value="pearl">{t("paint_pearl")}</option>
+              <option value="matte">{t("paint_matte")}</option>
+            </select>
+          </div>
+
           <div className="border-t border-gray-100 pt-4 space-y-4">
-            <h3 className="text-sm font-semibold text-gray-700">Fahrzeuggeschichte</h3>
+            <h3 className="text-sm font-semibold text-gray-700">{t("create_history_title")}</h3>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Vorbesitzer</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_owners_label")}</label>
                 <select value={form.owners} onChange={(e) => set("owners", e.target.value)} className={selectCls}>
                   <option value="">—</option>
                   <option value="1">1</option>
@@ -506,16 +576,16 @@ export default function CreateListingPage() {
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">MFK (nächste HU)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_mfk_label")}</label>
                 <div className="grid grid-cols-2 gap-2">
                   <select value={form.mfk_month} onChange={(e) => set("mfk_month", e.target.value)} className={selectCls}>
-                    <option value="">Monat</option>
-                    {["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"].map((m, i) => (
+                    <option value="">{t("create_month_placeholder")}</option>
+                    {MONTHS.map((m, i) => (
                       <option key={m} value={i + 1}>{m}</option>
                     ))}
                   </select>
                   <select value={form.mfk_year} onChange={(e) => set("mfk_year", e.target.value)} className={selectCls}>
-                    <option value="">Jahr</option>
+                    <option value="">{t("create_year_placeholder")}</option>
                     {Array.from({ length: 8 }, (_, i) => 2025 + i).map((y) => (
                       <option key={y} value={y}>{y}</option>
                     ))}
@@ -526,23 +596,23 @@ export default function CreateListingPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Servicehistorie</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_service_label")}</label>
                 <select value={form.service_history} onChange={(e) => set("service_history", e.target.value)} className={selectCls}>
                   <option value="">—</option>
-                  <option value="full">Lückenlos (Markenwerkstatt)</option>
-                  <option value="partial">Teilweise vorhanden</option>
-                  <option value="none">Nicht vorhanden</option>
+                  <option value="full">{t("service_full")}</option>
+                  <option value="partial">{t("service_partial")}</option>
+                  <option value="none">{t("service_none")}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Garantie</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_warranty_label")}</label>
                 <select value={form.warranty} onChange={(e) => set("warranty", e.target.value)} className={selectCls}>
-                  <option value="">Keine</option>
-                  <option value="3m">3 Monate</option>
-                  <option value="6m">6 Monate</option>
-                  <option value="12m">12 Monate</option>
-                  <option value="24m">24 Monate</option>
-                  <option value="factory">Werksgarantie</option>
+                  <option value="">{t("warranty_none")}</option>
+                  <option value="3m">{t("warranty_3m")}</option>
+                  <option value="6m">{t("warranty_6m")}</option>
+                  <option value="12m">{t("warranty_12m")}</option>
+                  <option value="24m">{t("warranty_24m")}</option>
+                  <option value="factory">{t("warranty_factory")}</option>
                 </select>
               </div>
             </div>
@@ -550,12 +620,12 @@ export default function CreateListingPage() {
         </div>
       )}
 
-      {/* STEP 3: Ausstattung */}
+      {/* STEP 3 */}
       {step === 3 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6 shadow-sm">
           <div>
-            <h2 className="font-semibold text-gray-900 text-lg">Ausstattung & Extras</h2>
-            <p className="text-gray-400 text-sm mt-0.5">Wählen Sie alle zutreffenden Optionen</p>
+            <h2 className="font-semibold text-gray-900 text-lg">{t("create_s3_title")}</h2>
+            <p className="text-gray-400 text-sm mt-0.5">{t("create_s3_sub")}</p>
           </div>
 
           {EQUIPMENT_GROUPS.map((group) => (
@@ -590,19 +660,19 @@ export default function CreateListingPage() {
 
           {Object.values(form.equipment).filter(Boolean).length > 0 && (
             <div className="bg-primary-50 rounded-xl px-4 py-2.5 text-sm text-primary-700 font-medium">
-              {Object.values(form.equipment).filter(Boolean).length} Ausstattungsmerkmale ausgewählt
+              {Object.values(form.equipment).filter(Boolean).length} {t("create_equip_selected")}
             </div>
           )}
         </div>
       )}
 
-      {/* STEP 4: Preis & Ort */}
+      {/* STEP 4 */}
       {step === 4 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 shadow-sm">
-          <h2 className="font-semibold text-gray-900 text-lg">Preis & Standort</h2>
+          <h2 className="font-semibold text-gray-900 text-lg">{t("create_s4_title")}</h2>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Preis (CHF) *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_price_label")}</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">CHF</span>
               <input
@@ -618,9 +688,9 @@ export default function CreateListingPage() {
 
           <div className="grid grid-cols-1 gap-3">
             {[
-              { key: "price_negotiable", label: "Preis verhandelbar", desc: "Käufer können ein Gebot machen" },
-              { key: "leasing_available", label: "Leasing möglich", desc: "Finanzierung über Leasing" },
-              { key: "warranty_included", label: "Garantie inbegriffen", desc: "Garantie im Preis enthalten" },
+              { key: "price_negotiable", label: t("create_negotiable_label"), desc: t("create_negotiable_desc") },
+              { key: "leasing_available", label: t("create_leasing_label"), desc: t("create_leasing_desc") },
+              { key: "warranty_included", label: t("create_warranty_incl_label"), desc: t("create_warranty_incl_desc") },
             ].map((opt) => (
               <label key={opt.key} className="flex items-center gap-3 p-3.5 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
                 <div
@@ -643,29 +713,28 @@ export default function CreateListingPage() {
 
           <div className="border-t border-gray-100 pt-4 grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Kanton *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_canton_label")}</label>
               <select value={form.canton} onChange={(e) => set("canton", e.target.value)} className={selectCls} required>
-                <option value="">Kanton wählen</option>
+                <option value="">{t("create_select_canton")}</option>
                 {SWISS_CANTONS.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Stadt / Ort</label>
-              <input type="text" value={form.city} onChange={(e) => set("city", e.target.value)} className={inputCls} placeholder="z.B. Zürich" />
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_city_label")}</label>
+              <input type="text" value={form.city} onChange={(e) => set("city", e.target.value)} className={inputCls} placeholder={t("create_city_placeholder")} />
             </div>
           </div>
         </div>
       )}
 
-      {/* STEP 5: Fotos */}
+      {/* STEP 5 */}
       {step === 5 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 shadow-sm">
           <div>
-            <h2 className="font-semibold text-gray-900 text-lg">Fotos hochladen</h2>
-            <p className="text-gray-400 text-sm mt-0.5">Bis zu 20 Fotos. Erste Foto wird als Titelbild verwendet.</p>
+            <h2 className="font-semibold text-gray-900 text-lg">{t("create_s5_title")}</h2>
+            <p className="text-gray-400 text-sm mt-0.5">{t("create_s5_sub")}</p>
           </div>
 
-          {/* Drop zone */}
           <div
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
@@ -680,8 +749,8 @@ export default function CreateListingPage() {
             <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
               <Upload className="w-6 h-6 text-gray-400" />
             </div>
-            <p className="text-sm font-medium text-gray-700">Fotos hierher ziehen</p>
-            <p className="text-xs text-gray-400 mt-1">oder klicken zum Auswählen · JPG, PNG, WebP</p>
+            <p className="text-sm font-medium text-gray-700">{t("create_drop_title")}</p>
+            <p className="text-xs text-gray-400 mt-1">{t("create_drop_sub")}</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -692,7 +761,6 @@ export default function CreateListingPage() {
             />
           </div>
 
-          {/* Preview grid */}
           {imagePreviews.length > 0 && (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {imagePreviews.map((src, i) => (
@@ -700,7 +768,7 @@ export default function CreateListingPage() {
                   <img src={src} alt="" className="w-full h-full object-cover" />
                   {i === 0 && (
                     <div className="absolute bottom-0 left-0 right-0 bg-primary-600 text-white text-[10px] text-center py-0.5 font-medium">
-                      Titelbild
+                      {t("create_cover_photo")}
                     </div>
                   )}
                   <button
@@ -726,25 +794,25 @@ export default function CreateListingPage() {
 
           {imagePreviews.length === 0 && (
             <p className="text-center text-sm text-gray-400 py-2">
-              Sie können Fotos auch später hinzufügen.
+              {t("create_photos_later")}
             </p>
           )}
         </div>
       )}
 
-      {/* STEP 6: Beschreibung & Titel */}
+      {/* STEP 6 */}
       {step === 6 && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 shadow-sm">
-          <h2 className="font-semibold text-gray-900 text-lg">Inserat-Text</h2>
+          <h2 className="font-semibold text-gray-900 text-lg">{t("create_s6_title")}</h2>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Inserat-Titel *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_listing_title_label")}</label>
             <input
               type="text"
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
               className={inputCls}
-              placeholder={getAutoTitle() || "z.B. BMW 320d xDrive Touring, AHK, Panorama"}
+              placeholder={getAutoTitle() || "BMW 320d xDrive Touring"}
             />
             {!form.title && getAutoTitle() && (
               <button
@@ -752,45 +820,42 @@ export default function CreateListingPage() {
                 onClick={() => set("title", getAutoTitle())}
                 className="mt-1.5 text-xs text-primary-600 hover:text-primary-700"
               >
-                Vorschlag übernehmen: „{getAutoTitle()}"
+                {t("create_suggest_prefix")} „{getAutoTitle()}"
               </button>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Beschreibung</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("create_description_label")}</label>
             <textarea
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
               rows={8}
               className={inputCls + " resize-none leading-relaxed"}
-              placeholder={`Beschreiben Sie Ihr Fahrzeug ausführlich:
-• Grund des Verkaufs
-• Besonderheiten & Extras
-• Bekannte Mängel
-• Wartungshistorie
-• Besichtigungsmöglichkeiten`}
+              placeholder={t("create_description_placeholder")}
             />
             <div className="flex justify-between mt-1">
-              <span className="text-xs text-gray-400">Je mehr Details, desto schneller der Verkauf</span>
-              <span className="text-xs text-gray-400">{form.description.length} Zeichen</span>
+              <span className="text-xs text-gray-400">{t("create_desc_hint")}</span>
+              <span className="text-xs text-gray-400">{form.description.length} {t("create_chars")}</span>
             </div>
           </div>
 
           {/* Summary */}
           <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
-            <p className="font-medium text-gray-700 mb-2">Zusammenfassung</p>
+            <p className="font-medium text-gray-700 mb-2">{t("create_summary_title")}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-              <span className="text-gray-400">Fahrzeug:</span>
+              <span className="text-gray-400">{t("create_summary_vehicle")}</span>
               <span className="text-gray-800 font-medium">{form.make} {form.model} {form.year}</span>
-              <span className="text-gray-400">Preis:</span>
+              <span className="text-gray-400">{t("create_summary_price")}</span>
               <span className="text-gray-800 font-medium">CHF {Number(form.price_chf).toLocaleString("de-CH")}</span>
-              <span className="text-gray-400">Standort:</span>
+              <span className="text-gray-400">{t("create_summary_location")}</span>
               <span className="text-gray-800 font-medium">{form.canton}{form.city ? ` / ${form.city}` : ""}</span>
-              <span className="text-gray-400">Fotos:</span>
-              <span className="text-gray-800 font-medium">{imageFiles.length} Foto{imageFiles.length !== 1 ? "s" : ""}</span>
-              <span className="text-gray-400">Ausstattung:</span>
-              <span className="text-gray-800 font-medium">{Object.values(form.equipment).filter(Boolean).length} Merkmale</span>
+              <span className="text-gray-400">{t("create_summary_photos")}</span>
+              <span className="text-gray-800 font-medium">
+                {imageFiles.length} {imageFiles.length !== 1 ? t("create_photo_plural") : t("create_photo_singular")}
+              </span>
+              <span className="text-gray-400">{t("create_summary_equipment")}</span>
+              <span className="text-gray-800 font-medium">{Object.values(form.equipment).filter(Boolean).length} {t("create_features_count")}</span>
             </div>
           </div>
         </div>
@@ -804,11 +869,11 @@ export default function CreateListingPage() {
             onClick={prevStep}
             className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors text-sm font-medium"
           >
-            <ChevronLeft className="w-4 h-4" /> Zurück
+            <ChevronLeft className="w-4 h-4" /> {t("create_back")}
           </button>
         ) : (
           <Link href="/" className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors text-sm font-medium">
-            Abbrechen
+            {t("create_cancel")}
           </Link>
         )}
 
@@ -818,7 +883,7 @@ export default function CreateListingPage() {
             onClick={nextStep}
             className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm"
           >
-            Weiter <ChevronRight className="w-4 h-4" />
+            {t("create_next")} <ChevronRight className="w-4 h-4" />
           </button>
         ) : (
           <button
@@ -828,9 +893,9 @@ export default function CreateListingPage() {
             className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm disabled:opacity-50"
           >
             {isLoading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Wird veröffentlicht...</>
+              <><Loader2 className="w-4 h-4 animate-spin" /> {t("create_publishing")}</>
             ) : (
-              <><Check className="w-4 h-4" /> Inserat veröffentlichen</>
+              <><Check className="w-4 h-4" /> {t("create_publish")}</>
             )}
           </button>
         )}

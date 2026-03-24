@@ -1,11 +1,17 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.api.v1.router import api_router
 from app.core.database import engine, Base
 import app.models.user  # noqa: F401 - ensure models are registered
 import app.models.listing  # noqa: F401
+import app.models.favorite  # noqa: F401
+import app.models.chat  # noqa: F401
+import app.models.inquiry  # noqa: F401
+import app.models.review  # noqa: F401
+import os
 
 
 @asynccontextmanager
@@ -31,6 +37,9 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 
 @app.get("/health")

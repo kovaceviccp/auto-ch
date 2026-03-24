@@ -67,6 +67,7 @@ class ListingResponse(BaseModel):
     images: List[str]
     features: dict
     views: int
+    likes_count: int = 0
     is_featured: bool
     created_at: datetime
     seller: Optional[dict] = None

@@ -1,14 +1,12 @@
+"use client";
 import Link from "next/link";
 import { Listing } from "@/types";
 import { formatPrice, formatMileage } from "@/lib/utils";
 import { MapPin, Gauge, Fuel, Calendar, ArrowUpRight, Images } from "lucide-react";
+import { useT, TranslationKey } from "@/lib/i18n";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
-const fuelLabels: Record<string, string> = {
-  petrol: "Benzin", diesel: "Diesel", electric: "Elektro",
-  hybrid: "Hybrid", plugin_hybrid: "Plug-in", lpg: "LPG",
-};
-
-function CarPlaceholder() {
+function CarPlaceholder({ label }: { label: string }) {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 gap-3">
       <svg viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-24 h-auto">
@@ -21,96 +19,122 @@ function CarPlaceholder() {
         <circle cx="88" cy="41" r="4" fill="#93c5fd"/>
         <ellipse cx="104" cy="30" rx="4" ry="3" fill="#fbbf24" fillOpacity="0.8"/>
       </svg>
-      <span className="text-xs text-primary-300-safe font-medium tracking-wide">Kein Bild</span>
+      <span className="text-xs text-primary-300-safe font-medium tracking-wide">{label}</span>
     </div>
   );
 }
 
+const fuelKeyMap: Record<string, TranslationKey> = {
+  petrol: "fuel_petrol",
+  diesel: "fuel_diesel",
+  electric: "fuel_electric",
+  hybrid: "fuel_hybrid",
+  plugin_hybrid: "fuel_plugin_hybrid",
+  lpg: "fuel_lpg",
+  cng: "fuel_cng",
+  hydrogen: "fuel_hydrogen",
+};
+
 export function ListingCard({ listing }: { listing: Listing }) {
+  const t = useT();
+  const { ref, visible } = useScrollReveal();
   const mainImage = listing.images[0] || null;
   const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1", "") || "http://localhost:8001";
   const imageCount = listing.images.length;
+  const isNew = (Date.now() - new Date(listing.created_at).getTime()) < 24 * 60 * 60 * 1000;
 
   return (
-    <Link
-      href={`/listings/${listing.id}`}
-      className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+    <div
+      ref={ref}
+      className={`transition-all duration-500 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
     >
-      <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
-        {mainImage ? (
-          <img
-            src={`${apiBase}${mainImage}`}
-            alt={listing.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-          />
-        ) : (
-          <CarPlaceholder />
-        )}
-
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-        {/* Top badges */}
-        <div className="absolute top-3 left-3 flex gap-1.5">
-          {listing.is_featured && (
-            <span className="bg-accent-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-sm">
-              ★ Featured
-            </span>
+      <Link
+        href={`/listings/${listing.id}`}
+        className="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300"
+      >
+        <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+          {mainImage ? (
+            <img
+              src={`${apiBase}${mainImage}`}
+              alt={listing.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+            />
+          ) : (
+            <CarPlaceholder label={t("detail_no_image")} />
           )}
-          {listing.condition === "new" && (
-            <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-sm">
-              Neu
-            </span>
-          )}
-        </div>
 
-        {/* Image count */}
-        {imageCount > 1 && (
-          <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-            <Images className="w-3 h-3" />
-            {imageCount}
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* Top badges */}
+          <div className="absolute top-3 left-3 flex gap-1.5">
+            {listing.is_featured && (
+              <span className="bg-accent-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-sm">
+                ★ Featured
+              </span>
+            )}
+            {isNew && (
+              <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-sm flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                Neu
+              </span>
+            )}
+            {listing.condition === "new" && !isNew && (
+              <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-sm">
+                {t("cond_new")}
+              </span>
+            )}
           </div>
-        )}
 
-        {/* Arrow icon on hover */}
-        <div className="absolute top-3 right-3 w-7 h-7 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm translate-y-1 group-hover:translate-y-0">
-          <ArrowUpRight className="w-3.5 h-3.5 text-primary-600" />
-        </div>
-      </div>
+          {/* Image count */}
+          {imageCount > 1 && (
+            <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+              <Images className="w-3 h-3" />
+              {imageCount}
+            </div>
+          )}
 
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="font-bold text-primary-700 text-lg leading-tight">
-            {formatPrice(listing.price_chf)}
+          {/* Arrow icon on hover */}
+          <div className="absolute top-3 right-3 w-7 h-7 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm translate-y-1 group-hover:translate-y-0">
+            <ArrowUpRight className="w-3.5 h-3.5 text-primary-600" />
           </div>
-          {listing.price_negotiable && (
-            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5">VB</span>
-          )}
         </div>
 
-        <h3 className="font-semibold text-gray-900 mt-1 text-sm leading-snug line-clamp-2 group-hover:text-primary-700 transition-colors duration-200">
-          {listing.title}
-        </h3>
+        <div className="p-4 border-l-2 border-l-transparent group-hover:border-l-primary-500 transition-all duration-300">
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-bold text-primary-700 text-xl leading-tight">
+              {formatPrice(listing.price_chf)}
+            </div>
+            {listing.price_negotiable && (
+              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5">{t("listing_vb")}</span>
+            )}
+          </div>
 
-        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-400">
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3 h-3 text-gray-300" /> {listing.year}
-          </span>
-          {listing.mileage_km != null && (
+          <h3 className="font-semibold text-gray-900 mt-1 text-sm leading-snug line-clamp-2 group-hover:text-primary-700 transition-colors duration-200">
+            {listing.title}
+          </h3>
+
+          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-400">
             <span className="flex items-center gap-1">
-              <Gauge className="w-3 h-3 text-gray-300" /> {formatMileage(listing.mileage_km)}
+              <Calendar className="w-3 h-3 text-gray-300" /> {listing.year}
             </span>
-          )}
-          {listing.fuel_type && (
+            {listing.mileage_km != null && (
+              <span className="flex items-center gap-1">
+                <Gauge className="w-3 h-3 text-gray-300" /> {formatMileage(listing.mileage_km)}
+              </span>
+            )}
+            {listing.fuel_type && (
+              <span className="flex items-center gap-1">
+                <Fuel className="w-3 h-3 text-gray-300" />
+                {fuelKeyMap[listing.fuel_type] ? t(fuelKeyMap[listing.fuel_type]) : listing.fuel_type}
+              </span>
+            )}
             <span className="flex items-center gap-1">
-              <Fuel className="w-3 h-3 text-gray-300" /> {fuelLabels[listing.fuel_type] || listing.fuel_type}
+              <MapPin className="w-3 h-3 text-gray-300" /> {listing.canton}
             </span>
-          )}
-          <span className="flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-gray-300" /> {listing.canton}
-          </span>
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }

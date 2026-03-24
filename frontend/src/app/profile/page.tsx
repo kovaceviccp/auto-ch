@@ -78,7 +78,7 @@ export default function ProfilePage() {
               </span>
               {user.is_verified && (
                 <span className="flex items-center gap-1 text-xs bg-green-500/20 text-green-200 px-2 py-0.5 rounded-full">
-                  <ShieldCheck className="w-3 h-3" /> Verifiziert
+                  <ShieldCheck className="w-3 h-3" /> {t("profile_verified")}
                 </span>
               )}
             </div>
@@ -126,7 +126,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <div>
-                  <dt className="text-gray-400 text-xs">E-Mail</dt>
+                  <dt className="text-gray-400 text-xs">{t("profile_email_field")}</dt>
                   <dd className="text-gray-900 font-medium">{user.email}</dd>
                 </div>
               </div>
@@ -134,7 +134,7 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div>
-                    <dt className="text-gray-400 text-xs">Telefon</dt>
+                    <dt className="text-gray-400 text-xs">{t("profile_phone_field")}</dt>
                     <dd className="text-gray-900 font-medium">{user.phone}</dd>
                   </div>
                 </div>
@@ -143,7 +143,7 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div>
-                    <dt className="text-gray-400 text-xs">Standort</dt>
+                    <dt className="text-gray-400 text-xs">{t("profile_location_field")}</dt>
                     <dd className="text-gray-900 font-medium">{user.city ? `${user.city}, ` : ""}{user.canton}</dd>
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export default function ProfilePage() {
               </h2>
               <dl className="space-y-3 text-sm">
                 <div>
-                  <dt className="text-gray-400 text-xs">Firmenname</dt>
+                  <dt className="text-gray-400 text-xs">{t("profile_company_name_field")}</dt>
                   <dd className="text-gray-900 font-medium">{user.company_name}</dd>
                 </div>
               </dl>

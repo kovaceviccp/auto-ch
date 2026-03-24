@@ -1,8 +1,9 @@
 "use client";
 import { SearchForm } from "@/components/listings/SearchForm";
 import Link from "next/link";
-import { Car, Truck, Bus, Tractor, TrendingUp, Shield, Zap, ArrowRight } from "lucide-react";
+import { Car, Truck, Bus, Tractor, TrendingUp, Shield, Zap, ArrowRight, Calculator } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { RecentlyViewed } from "@/components/listings/RecentlyViewed";
 
 export default function HomePage() {
   const t = useT();
@@ -101,7 +102,7 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{t("home_categories")}</h2>
-            <p className="text-gray-400 text-sm mt-1">Finden Sie Ihr Fahrzeug nach Kategorie</p>
+            <p className="text-gray-400 text-sm mt-1">{t("home_categories_sub")}</p>
           </div>
           <Link href="/listings" className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors group">
             {t("home_show_all")}
@@ -137,7 +138,7 @@ export default function HomePage() {
           <div className="relative px-8 py-12 md:px-16 text-white text-center">
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1 text-xs text-primary-200-safe mb-4">
               <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-              Kostenlos & schnell
+              {t("home_cta_badge")}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-3">{t("home_sell_title")}</h2>
             <p className="text-primary-200-safe mb-8 max-w-md mx-auto text-lg">{t("home_sell_sub")}</p>
@@ -156,10 +157,19 @@ export default function HomePage() {
                 {t("home_browse_btn")}
                 <ArrowRight className="w-4 h-4" />
               </Link>
+              <Link
+                href="/valuation"
+                className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/25 text-white px-8 py-3.5 rounded-xl font-semibold transition-all duration-200"
+              >
+                <Calculator className="w-4 h-4" />
+                {t("home_valuation_btn")}
+              </Link>
             </div>
           </div>
         </div>
       </div>
+
+      <RecentlyViewed />
     </div>
   );
 }

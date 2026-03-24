@@ -34,3 +34,4 @@ class User(Base):
     updated_at: Mapped[DateTime | None] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     listings = relationship("Listing", back_populates="seller", cascade="all, delete-orphan")
+    favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")

@@ -2,16 +2,20 @@
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth";
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
-import { Car, LogIn, LogOut, Plus, Globe } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Car, LogIn, LogOut, Plus, Globe, Heart, MessageCircle, Send } from "lucide-react";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useLanguageStore } from "@/store/language";
 import { useT } from "@/lib/i18n";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 export function Navbar() {
   const { user, logout, loadUser } = useAuthStore();
   const pathname = usePathname();
+  const router = useRouter();
   const { lang, setLang } = useLanguageStore();
   const t = useT();
+  const { chatCount: unreadChat } = useUnreadCount();
 
   useEffect(() => {
     loadUser();
@@ -22,6 +26,7 @@ export function Navbar() {
     { href: "/listings?vehicle_type=van", label: t("nav_vans") },
     { href: "/listings?vehicle_type=truck", label: t("nav_trucks") },
     { href: "/listings", label: t("nav_all") },
+    { href: "/valuation", label: t("nav_valuation") },
   ];
 
   return (
@@ -72,6 +77,21 @@ export function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-1">
+              <Link href="/favorites" className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title={t("favorites_title")}>
+                <Heart className="w-4 h-4" />
+              </Link>
+              <Link href="/my-offers" className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="Meine Angebote">
+                <Send className="w-4 h-4" />
+              </Link>
+              <Link href="/chat" className="relative p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title={t("chat_title")}>
+                <MessageCircle className="w-4 h-4" />
+                {unreadChat > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {unreadChat > 9 ? "9+" : unreadChat}
+                  </span>
+                )}
+              </Link>
+              <NotificationBell />
               <Link
                 href="/profile"
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -82,7 +102,7 @@ export function Navbar() {
                 <span className="hidden sm:inline font-medium">{user.first_name}</span>
               </Link>
               <button
-                onClick={logout}
+                onClick={() => { logout(); router.push("/auth/login"); }}
                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                 title={t("nav_logout")}
               >

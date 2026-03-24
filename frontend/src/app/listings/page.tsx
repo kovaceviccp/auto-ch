@@ -71,7 +71,7 @@ function ListingsContent() {
       <div className="flex gap-6">
         {/* Filters sidebar */}
         <aside className={`${showFilters ? "block" : "hidden"} md:block w-full md:w-64 flex-shrink-0`}>
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-20">
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 shadow-xl shadow-gray-100/50 p-5 sticky top-20 ring-1 ring-gray-900/5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-gray-900">{t("listings_filter")}</h2>
               <button onClick={() => router.push("/listings")} className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1">
@@ -81,11 +81,11 @@ function ListingsContent() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t("listings_type")}</label>
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t("listings_type")}</label>
                 <select
                   value={params.vehicle_type}
                   onChange={(e) => updateFilter("vehicle_type", e.target.value)}
-                  className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-900"
+                  className="w-full bg-white/70 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
                 >
                   <option value="">{t("listings_all")}</option>
                   {vehicleTypes.map((type) => (
@@ -95,11 +95,11 @@ function ListingsContent() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t("listings_make")}</label>
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t("listings_make")}</label>
                 <select
                   value={params.make}
                   onChange={(e) => updateFilter("make", e.target.value)}
-                  className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-900"
+                  className="w-full bg-white/70 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
                 >
                   <option value="">{t("listings_all")}</option>
                   {CAR_MAKES.map((m) => (
@@ -109,11 +109,11 @@ function ListingsContent() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t("listings_canton")}</label>
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t("listings_canton")}</label>
                 <select
                   value={params.canton}
                   onChange={(e) => updateFilter("canton", e.target.value)}
-                  className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-900"
+                  className="w-full bg-white/70 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
                 >
                   <option value="">{t("listings_all_cantons")}</option>
                   {SWISS_CANTONS.map((c) => (
@@ -123,11 +123,11 @@ function ListingsContent() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t("listings_price_to")}</label>
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t("listings_price_to")}</label>
                 <select
                   value={params.price_to}
                   onChange={(e) => updateFilter("price_to", e.target.value)}
-                  className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-900"
+                  className="w-full bg-white/70 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
                 >
                   <option value="">{t("listings_no_limit")}</option>
                   {[
@@ -146,11 +146,11 @@ function ListingsContent() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t("listings_year_from")}</label>
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t("listings_year_from")}</label>
                 <select
                   value={params.year_from}
                   onChange={(e) => updateFilter("year_from", e.target.value)}
-                  className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-900"
+                  className="w-full bg-white/70 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
                 >
                   <option value="">{t("listings_all_years")}</option>
                   {Array.from({ length: 30 }, (_, i) => 2024 - i).map((y) => (

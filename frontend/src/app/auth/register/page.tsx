@@ -18,7 +18,7 @@ export default function RegisterPage() {
       icon: ShoppingCart,
       title: t("register_buyer"),
       subtitle: t("register_buyer_sub"),
-      features: ["Favoriten speichern", "Suchalerts einrichten", "Verkäufer kontaktieren"],
+      features: [t("register_buyer_feat_1"), t("register_buyer_feat_2"), t("register_buyer_feat_3")],
       color: "border-blue-500 bg-blue-50",
       iconColor: "text-blue-600",
     },
@@ -27,7 +27,7 @@ export default function RegisterPage() {
       icon: User,
       title: t("register_seller"),
       subtitle: t("register_seller_sub"),
-      features: ["Bis 5 kostenlose Inserate", "Direkte Käuferkontakte", "Einfaches Inserieren"],
+      features: [t("register_seller_feat_1"), t("register_seller_feat_2"), t("register_seller_feat_3")],
       color: "border-green-500 bg-green-50",
       iconColor: "text-green-600",
     },
@@ -36,7 +36,7 @@ export default function RegisterPage() {
       icon: Building2,
       title: t("register_dealer"),
       subtitle: t("register_dealer_sub"),
-      features: ["Unbegrenzte Inserate", "Händler-Profil & Logo", "Featured Listings"],
+      features: [t("register_dealer_feat_1"), t("register_dealer_feat_2"), t("register_dealer_feat_3")],
       color: "border-primary-500 bg-primary-50",
       iconColor: "text-primary-600",
     },
@@ -84,7 +84,7 @@ export default function RegisterPage() {
       router.push("/");
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { detail?: string } } };
-      setError(axiosError.response?.data?.detail || "Registrierung fehlgeschlagen");
+      setError(axiosError.response?.data?.detail || t("register_error"));
     } finally {
       setIsLoading(false);
     }
@@ -106,28 +106,28 @@ export default function RegisterPage() {
 
         {/* Account type selector */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          {accountTypes.map((t) => (
+          {accountTypes.map((acct) => (
             <button
-              key={t.id}
+              key={acct.id}
               type="button"
-              onClick={() => setAccountType(t.id)}
+              onClick={() => setAccountType(acct.id)}
               className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center ${
-                accountType === t.id
-                  ? t.color
+                accountType === acct.id
+                  ? acct.color
                   : "border-gray-200 bg-white hover:border-gray-300"
               }`}
             >
-              {accountType === t.id && (
+              {accountType === acct.id && (
                 <div className="absolute top-2 right-2 w-4 h-4 bg-primary-600 rounded-full flex items-center justify-center">
                   <Check className="w-2.5 h-2.5 text-white" />
                 </div>
               )}
-              <t.icon className={`w-6 h-6 ${accountType === t.id ? t.iconColor : "text-gray-400"}`} />
+              <acct.icon className={`w-6 h-6 ${accountType === acct.id ? acct.iconColor : "text-gray-400"}`} />
               <div>
-                <div className={`text-xs font-semibold ${accountType === t.id ? "text-gray-900" : "text-gray-600"}`}>
-                  {t.title}
+                <div className={`text-xs font-semibold ${accountType === acct.id ? "text-gray-900" : "text-gray-600"}`}>
+                  {acct.title}
                 </div>
-                <div className="text-[10px] text-gray-400 mt-0.5 leading-tight">{t.subtitle}</div>
+                <div className="text-[10px] text-gray-400 mt-0.5 leading-tight">{acct.subtitle}</div>
               </div>
             </button>
           ))}
@@ -136,9 +136,9 @@ export default function RegisterPage() {
         {/* Features of selected type */}
         {accountType && (
           <div className="mb-5 p-3 bg-gray-50 rounded-lg">
-            <p className="text-xs font-medium text-gray-500 mb-2">Inklusive:</p>
+            <p className="text-xs font-medium text-gray-500 mb-2">{t("register_includes")}</p>
             <ul className="space-y-1">
-              {accountTypes.find((t) => t.id === accountType)?.features.map((f) => (
+              {accountTypes.find((acct) => acct.id === accountType)?.features.map((f) => (
                 <li key={f} className="flex items-center gap-2 text-xs text-gray-700">
                   <Check className="w-3 h-3 text-green-500 flex-shrink-0" />
                   {f}
@@ -158,23 +158,23 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Vorname *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t("register_first_name")} *</label>
                 <input type="text" value={form.first_name} onChange={(e) => set("first_name", e.target.value)} className={inputCls} placeholder="Max" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nachname *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t("register_last_name")} *</label>
                 <input type="text" value={form.last_name} onChange={(e) => set("last_name", e.target.value)} className={inputCls} placeholder="Mustermann" required />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">E-Mail *</label>
-              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} placeholder="ihre@email.ch" required />
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t("login_email")} *</label>
+              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} placeholder={t("login_email_placeholder")} required />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Passwort *</label>
-              <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)} className={inputCls} placeholder="Min. 8 Zeichen" minLength={8} required />
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t("login_password")} *</label>
+              <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)} className={inputCls} placeholder="Min. 8" minLength={8} required />
             </div>
 
             {/* Seller & Dealer: phone + canton */}
@@ -182,7 +182,7 @@ export default function RegisterPage() {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Telefon {accountType === "dealer" ? "*" : ""}
+                    {t("register_phone")} {accountType === "dealer" ? "*" : ""}
                   </label>
                   <input
                     type="tel"
@@ -196,14 +196,14 @@ export default function RegisterPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Kanton</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t("register_canton_label")}</label>
                     <select value={form.canton} onChange={(e) => set("canton", e.target.value)} className={selectCls}>
-                      <option value="">Kanton wählen</option>
+                      <option value="">{t("register_select_canton")}</option>
                       {SWISS_CANTONS.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Stadt / Ort</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t("register_city")}</label>
                     <input type="text" value={form.city} onChange={(e) => set("city", e.target.value)} className={inputCls} placeholder="Zürich" />
                   </div>
                 </div>
@@ -214,18 +214,18 @@ export default function RegisterPage() {
             {accountType === "dealer" && (
               <>
                 <div className="border-t border-gray-100 pt-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Firmendaten</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">{t("register_company_section")}</p>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Firmenname *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t("register_company_name")} *</label>
                       <input type="text" value={form.company_name} onChange={(e) => set("company_name", e.target.value)} className={inputCls} placeholder="Muster Auto AG" required />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">UID-Nummer</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t("register_uid")}</label>
                       <input type="text" value={form.uid_number} onChange={(e) => set("uid_number", e.target.value)} className={inputCls} placeholder="CHE-123.456.789" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t("register_website")}</label>
                       <input type="url" value={form.website} onChange={(e) => set("website", e.target.value)} className={inputCls} placeholder="https://musterauto.ch" />
                     </div>
                   </div>

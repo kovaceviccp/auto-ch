@@ -1,18 +1,31 @@
 "use client";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Listing } from "@/types";
 import { formatPrice, formatMileage } from "@/lib/utils";
-import { MapPin, Gauge, Fuel, Calendar, Phone, User, ArrowLeft, Share2, Heart } from "lucide-react";
+import { MapPin, Gauge, Fuel, Calendar, Phone, User, ArrowLeft, Share2, Send, Trash2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useT } from "@/lib/i18n";
+import { LikeButton } from "@/components/listings/LikeButton";
+import { InquiryModal } from "@/components/listings/InquiryModal";
+import { SellerReviews } from "@/components/reviews/SellerReviews";
+import { SimilarListings } from "@/components/listings/SimilarListings";
+import { FinancingCalc } from "@/components/listings/FinancingCalc";
+import { useAuthStore } from "@/store/auth";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
 export default function ListingDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
+  const { user } = useAuthStore();
   const [imgIdx, setImgIdx] = useState(0);
+  const [showInquiry, setShowInquiry] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const t = useT();
+  const { add } = useRecentlyViewed();
 
   const fuelLabels: Record<string, string> = {
     petrol: t("fuel_petrol"), diesel: t("fuel_diesel"), electric: t("fuel_electric"),
@@ -32,6 +45,12 @@ export default function ListingDetailPage() {
     },
   });
 
+  useEffect(() => {
+    if (listing) {
+      add(listing.id);
+    }
+  }, [listing]);
+
   if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8 animate-pulse">
@@ -50,6 +69,7 @@ export default function ListingDetailPage() {
   if (!listing) return <div className="p-8 text-center text-gray-400">{t("detail_not_found")}</div>;
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1", "") || "http://localhost:8001";
+  const fomoCount = listing.likes_count;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -141,10 +161,11 @@ export default function ListingDetailPage() {
                 )}
               </div>
               <div className="flex gap-2">
-                <button className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">
-                  <Heart className="w-4 h-4" />
-                </button>
-                <button className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-primary-500 transition-colors">
+                <LikeButton listingId={listing.id} sellerId={listing.seller_id} />
+                <button
+                  onClick={() => navigator.share?.({ title: listing.title, url: window.location.href })}
+                  className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-primary-500 transition-colors"
+                >
                   <Share2 className="w-4 h-4" />
                 </button>
               </div>
@@ -171,6 +192,13 @@ export default function ListingDetailPage() {
 
             <h1 className="text-xl font-bold text-gray-900 mt-4">{listing.title}</h1>
             <p className="text-sm text-gray-400 mt-1">{listing.views} {t("detail_views")}</p>
+
+            {fomoCount > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-rose-600 font-medium mt-1">
+                <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
+                {fomoCount} {fomoCount === 1 ? "Person hat" : "Personen haben"} dieses Inserat geliked
+              </div>
+            )}
           </div>
 
           {/* Seller */}
@@ -196,10 +224,94 @@ export default function ListingDetailPage() {
                   {listing.seller.phone}
                 </a>
               )}
+
+              {/* Owner: delete controls */}
+              {user && user.id === listing.seller_id ? (
+                <div className="mt-3">
+                  {!confirmDelete ? (
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      className="w-full flex items-center justify-center gap-2 border border-red-200 text-red-500 hover:bg-red-50 rounded-lg px-4 py-2.5 font-medium transition-all duration-200 text-sm"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Inserat löschen
+                    </button>
+                  ) : (
+                    <div className="animate-fade-in-up space-y-2">
+                      <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-lg p-3">
+                        <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-red-700">Möchten Sie dieses Inserat wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setConfirmDelete(false)}
+                          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                        >
+                          Abbrechen
+                        </button>
+                        <button
+                          disabled={deleting}
+                          onClick={async () => {
+                            setDeleting(true);
+                            try {
+                              await api.delete(`/listings/${listing.id}`);
+                              router.push("/listings");
+                            } catch {
+                              setDeleting(false);
+                              setConfirmDelete(false);
+                            }
+                          }}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                          {deleting ? (
+                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                          Endgültig löschen
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Contact/Offer button */}
+                  <button
+                    onClick={() => setShowInquiry(true)}
+                    className="mt-2 w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-3 font-medium transition-colors text-sm shadow-sm"
+                  >
+                    <Send className="w-4 h-4" />
+                    {t("inquiry_contact_btn")}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
+
+        {/* Financing calculator — right column, below seller card */}
+        <div className="space-y-4">
+          <FinancingCalc priceChf={listing.price_chf} />
+        </div>
+
+        {/* Seller Reviews — full width */}
+        <div className="lg:col-span-3">
+          <SellerReviews
+            sellerId={listing.seller_id}
+            currentUserId={user?.id}
+          />
+        </div>
+
+        {/* Similar listings */}
+        <SimilarListings
+          currentId={listing.id}
+          make={listing.make}
+          priceChf={listing.price_chf}
+        />
       </div>
+
+      {showInquiry && <InquiryModal listing={listing} onClose={() => setShowInquiry(false)} />}
     </div>
   );
 }

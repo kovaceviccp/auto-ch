@@ -70,9 +70,9 @@ export default function LoginPage() {
   const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all";
 
   const features = [
-    "Kostenlos inserieren",
-    "Direkt mit Käufern kommunizieren",
-    "Alle 26 Kantone abgedeckt",
+    t("login_feat_1"),
+    t("login_feat_2"),
+    t("login_feat_3"),
   ];
 
   return (
@@ -120,7 +120,7 @@ export default function LoginPage() {
         <div className="relative">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-sm text-primary-200-safe">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse-soft" />
-            Die Nr. 1 Fahrzeugbörse der Schweiz
+            {t("home_badge")}
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 className={inputCls}
-                placeholder="ihre@email.ch"
+                placeholder={t("login_email_placeholder")}
                 required
               />
             </div>

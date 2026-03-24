@@ -25,35 +25,36 @@ interface RegisterData {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: typeof window !== "undefined" ? localStorage.getItem("access_token") : null,
-  isLoading: false,
+  token: typeof window !== "undefined" ? sessionStorage.getItem("access_token") : null,
+  // start as loading if we have a token so protected pages wait before redirecting
+  isLoading: typeof window !== "undefined" ? !!sessionStorage.getItem("access_token") : false,
 
   login: async (email, password) => {
     const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("access_token", data.access_token);
+    sessionStorage.setItem("access_token", data.access_token);
     set({ user: data.user, token: data.access_token });
   },
 
   register: async (registerData) => {
     const { data } = await api.post("/auth/register", registerData);
-    localStorage.setItem("access_token", data.access_token);
+    sessionStorage.setItem("access_token", data.access_token);
     set({ user: data.user, token: data.access_token });
   },
 
   logout: () => {
-    localStorage.removeItem("access_token");
+    sessionStorage.removeItem("access_token");
     set({ user: null, token: null });
   },
 
   loadUser: async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) return;
+    const token = sessionStorage.getItem("access_token");
+    if (!token) { set({ isLoading: false }); return; }
     try {
       const { data } = await api.get("/users/me");
-      set({ user: data });
+      set({ user: data, isLoading: false });
     } catch {
-      localStorage.removeItem("access_token");
-      set({ user: null, token: null });
+      sessionStorage.removeItem("access_token");
+      set({ user: null, token: null, isLoading: false });
     }
   },
 }));

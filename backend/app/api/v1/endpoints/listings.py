@@ -6,7 +6,9 @@ from typing import Optional, List
 import os, uuid, shutil
 from app.core.database import get_db
 from app.core.config import settings
+from app.core.notification_manager import notif_manager
 from app.models.listing import Listing, VehicleType, FuelType, TransmissionType, ConditionType, ListingStatus
+from app.models.favorite import Favorite
 from app.models.user import User
 from app.schemas.listing import ListingCreate, ListingUpdate, ListingResponse, ListingListResponse
 from app.api.v1.endpoints.users import get_current_user
@@ -147,6 +149,12 @@ async def get_listing(listing_id: int, db: AsyncSession = Depends(get_db)):
     listing.views += 1
     await db.commit()
 
+    # Real like count
+    count_result = await db.execute(
+        select(func.count()).select_from(Favorite).where(Favorite.listing_id == listing_id)
+    )
+    likes_count = count_result.scalar() or 0
+
     seller_data = None
     if listing.seller:
         seller_data = {
@@ -159,6 +167,7 @@ async def get_listing(listing_id: int, db: AsyncSession = Depends(get_db)):
     listing.__dict__["seller"] = None
     item = ListingResponse.model_validate(listing)
     item.seller = seller_data
+    item.likes_count = likes_count
     return item
 
 
@@ -176,11 +185,25 @@ async def update_listing(
     if listing.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
+    old_price = listing.price_chf
+
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(listing, field, value)
 
     await db.commit()
     await db.refresh(listing)
+
+    new_price = data.model_dump(exclude_unset=True).get("price_chf")
+    if new_price and new_price < old_price:
+        favs = await db.execute(select(Favorite).where(Favorite.listing_id == listing_id))
+        for fav in favs.scalars().all():
+            await notif_manager.send(fav.user_id, "PRICE_DROP", {
+                "listing_id": listing_id,
+                "listing_title": listing.title,
+                "old_price": old_price,
+                "new_price": new_price,
+            })
+
     listing.__dict__["seller"] = None
     item = ListingResponse.model_validate(listing)
     item.seller = {
@@ -240,4 +263,5 @@ async def upload_images(
     listing.images = saved_paths
     await db.commit()
     await db.refresh(listing)
-    return listing
+    listing.__dict__["seller"] = None
+    return ListingResponse.model_validate(listing)
