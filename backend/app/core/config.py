@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://frontend:3000"]
 
     # Local storage (fallback)
-    UPLOAD_DIR: str = "/app/uploads"
+    UPLOAD_DIR: str = "/tmp/uploads"
     MAX_IMAGE_SIZE_MB: int = 10
 
     # Supabase Storage
