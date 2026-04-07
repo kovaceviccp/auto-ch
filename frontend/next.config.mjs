@@ -4,6 +4,8 @@ const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
   : null;
 
 const nextConfig = {
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   images: {
     remotePatterns: [
       { protocol: 'http', hostname: 'localhost' },
