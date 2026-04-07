@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db:5432/autoch"
     DATABASE_URL_SYNC: str = "postgresql://postgres:postgres@db:5432/autoch"
+    DB_SSL: bool = False  # Set to true for Neon
 
     # Redis
     REDIS_URL: str = "redis://redis:6379"
@@ -18,9 +19,15 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://frontend:3000"]
 
-    # Storage
+    # Local storage (fallback)
     UPLOAD_DIR: str = "/app/uploads"
     MAX_IMAGE_SIZE_MB: int = 10
+
+    # Supabase Storage
+    USE_SUPABASE: bool = False
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_KEY: str = ""
+    SUPABASE_BUCKET: str = "autoch-images"
 
     class Config:
         env_file = ".env"

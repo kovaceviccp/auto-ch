@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
 from typing import Optional, List
-import os, uuid, shutil
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.notification_manager import notif_manager
+from app.core.storage import upload_image
 from app.models.listing import Listing, VehicleType, FuelType, TransmissionType, ConditionType, ListingStatus
 from app.models.favorite import Favorite
 from app.models.user import User
@@ -32,6 +32,7 @@ async def get_listings(
     canton: Optional[str] = None,
     condition: Optional[ConditionType] = None,
     search: Optional[str] = None,
+    seller_id: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
 ):
     filters = [Listing.status == ListingStatus.active]
@@ -67,6 +68,8 @@ async def get_listings(
                 Listing.description.ilike(f"%{search}%"),
             )
         )
+    if seller_id:
+        filters.append(Listing.seller_id == seller_id)
 
     count_query = select(func.count()).select_from(Listing).where(and_(*filters))
     total_result = await db.execute(count_query)
@@ -247,18 +250,14 @@ async def upload_images(
     if listing.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    os.makedirs(f"{settings.UPLOAD_DIR}/{listing_id}", exist_ok=True)
     saved_paths = list(listing.images or [])
 
     for file in files:
         ext = file.filename.split(".")[-1].lower()
         if ext not in ["jpg", "jpeg", "png", "webp"]:
             raise HTTPException(status_code=400, detail=f"Invalid file type: {ext}")
-        filename = f"{uuid.uuid4()}.{ext}"
-        path = f"{settings.UPLOAD_DIR}/{listing_id}/{filename}"
-        with open(path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-        saved_paths.append(f"/uploads/{listing_id}/{filename}")
+        url = await upload_image(file, listing_id)
+        saved_paths.append(url)
 
     listing.images = saved_paths
     await db.commit()

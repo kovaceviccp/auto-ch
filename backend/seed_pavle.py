@@ -68,6 +68,16 @@ LISTINGS = [
         description="Audi A4 Avant in Navarra Blau Metallic mit S-Line Sportpaket und Quattro Allrad. Virtual Cockpit Plus, Matrix LED, B&O Sound, Panoramadach, AHK. Top gepflegt.",
         features={"navigation": True, "panorama_roof": True, "bluetooth": True, "apple_carplay": True, "tow_bar": True, "led_lights": True, "seat_heating": True},
     ),
+    dict(
+        title="BMW 123 xDrive M Sport",
+        make="BMW", model="3er", year=2021, vehicle_type="car", condition="used",
+        mileage_km=38000, fuel_type="diesel", transmission="automatic",
+        engine_cc=2993, power_kw=210, doors=4, seats=5, color="Schwarz",
+        price_chf=42900, price_negotiable=True, leasing_available=True,
+        canton="ZH", city="Zürich",
+        description="Sehr gepflegter BMW 330d xDrive in tadellosem Zustand. Vollausstattung, M-Sportpaket, Panoramadach, Harman Kardon Sound, Head-Up Display. Scheckheftgepflegt beim BMW Händler.",
+        features={"navigation": True, "panorama_roof": True, "bluetooth": True, "apple_carplay": True, "led_lights": True, "abs": True, "esp": True},
+    )
 ]
 
 async def main():

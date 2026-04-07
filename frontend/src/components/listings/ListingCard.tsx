@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { Listing } from "@/types";
 import { formatPrice, formatMileage } from "@/lib/utils";
-import { MapPin, Gauge, Fuel, Calendar, ArrowUpRight, Images } from "lucide-react";
+import { MapPin, Gauge, Fuel, Calendar, ArrowUpRight, Images, ArrowLeftRight } from "lucide-react";
 import { useT, TranslationKey } from "@/lib/i18n";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { useCompareStore } from "@/store/compare";
 
 function CarPlaceholder({ label }: { label: string }) {
   return (
@@ -38,15 +39,30 @@ const fuelKeyMap: Record<string, TranslationKey> = {
 export function ListingCard({ listing }: { listing: Listing }) {
   const t = useT();
   const { ref, visible } = useScrollReveal();
+  const { add, remove, has } = useCompareStore();
+  const inCompare = has(listing.id);
   const mainImage = listing.images[0] || null;
   const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1", "") || "http://localhost:8001";
   const imageCount = listing.images.length;
-  const isNew = (Date.now() - new Date(listing.created_at).getTime()) < 24 * 60 * 60 * 1000;
+  const ageMs = Date.now() - new Date(listing.created_at).getTime();
+  const ageHours = ageMs / (1000 * 60 * 60);
+  const ageDays = ageMs / (1000 * 60 * 60 * 24);
+  const isNew = ageHours < 24;
+
+  const ageBadge = ageHours < 2
+    ? { label: "Neu", color: "bg-emerald-500" }
+    : ageHours < 24
+    ? { label: "Heute", color: "bg-emerald-500" }
+    : ageDays < 2
+    ? { label: "Gestern", color: "bg-amber-500" }
+    : ageDays < 7
+    ? { label: `${Math.floor(ageDays)}T`, color: "bg-gray-400" }
+    : null;
 
   return (
     <div
       ref={ref}
-      className={`transition-all duration-500 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+      className={`relative transition-all duration-500 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
     >
       <Link
         href={`/listings/${listing.id}`}
@@ -73,10 +89,10 @@ export function ListingCard({ listing }: { listing: Listing }) {
                 ★ Featured
               </span>
             )}
-            {isNew && (
-              <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-sm flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                Neu
+            {ageBadge && (
+              <span className={`${ageBadge.color} text-white text-xs px-2 py-0.5 rounded-full font-semibold shadow-sm flex items-center gap-1`}>
+                {ageBadge.color === "bg-emerald-500" && <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />}
+                {ageBadge.label}
               </span>
             )}
             {listing.condition === "new" && !isNew && (
@@ -100,21 +116,21 @@ export function ListingCard({ listing }: { listing: Listing }) {
           </div>
         </div>
 
-        <div className="p-4 border-l-2 border-l-transparent group-hover:border-l-primary-500 transition-all duration-300">
-          <div className="flex items-start justify-between gap-2">
-            <div className="font-bold text-primary-700 text-xl leading-tight">
+        <div className="p-3 sm:p-4 border-l-2 border-l-transparent group-hover:border-l-primary-500 transition-all duration-300">
+          <h3 className="font-bold text-gray-900 text-base leading-snug group-hover:text-primary-700 transition-colors duration-200">
+            {listing.make} {listing.model}
+          </h3>
+
+          <div className="flex items-center justify-between mt-1.5">
+            <div className="font-semibold text-primary-700 text-sm leading-tight">
               {formatPrice(listing.price_chf)}
             </div>
             {listing.price_negotiable && (
-              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5">{t("listing_vb")}</span>
+              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full flex-shrink-0">{t("listing_vb")}</span>
             )}
           </div>
 
-          <h3 className="font-semibold text-gray-900 mt-1 text-sm leading-snug line-clamp-2 group-hover:text-primary-700 transition-colors duration-200">
-            {listing.title}
-          </h3>
-
-          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-400">
+          <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-400">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3 text-gray-300" /> {listing.year}
             </span>
@@ -135,6 +151,23 @@ export function ListingCard({ listing }: { listing: Listing }) {
           </div>
         </div>
       </Link>
+
+      {/* Compare button — outside Link to prevent navigation */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          inCompare ? remove(listing.id) : add(listing);
+        }}
+        title={inCompare ? "Aus Vergleich entfernen" : "Zum Vergleich hinzufügen"}
+        className={`absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all duration-200 opacity-0 group-hover:opacity-100 ${
+          inCompare
+            ? "bg-primary-100 text-primary-700 border border-primary-200"
+            : "bg-white/90 text-gray-500 border border-gray-200 hover:text-primary-600 hover:border-primary-300"
+        }`}
+      >
+        <ArrowLeftRight className="w-3 h-3" />
+        {inCompare ? "✓" : "Vergleichen"}
+      </button>
     </div>
   );
 }

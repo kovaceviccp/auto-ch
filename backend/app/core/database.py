@@ -7,7 +7,8 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_async_engine(settings.DATABASE_URL, echo=False)
+_connect_args = {"ssl": "require"} if settings.DB_SSL else {}
+engine = create_async_engine(settings.DATABASE_URL, connect_args=_connect_args, echo=False)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 

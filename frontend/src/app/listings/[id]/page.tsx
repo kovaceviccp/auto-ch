@@ -13,6 +13,7 @@ import { InquiryModal } from "@/components/listings/InquiryModal";
 import { SellerReviews } from "@/components/reviews/SellerReviews";
 import { SimilarListings } from "@/components/listings/SimilarListings";
 import { FinancingCalc } from "@/components/listings/FinancingCalc";
+import { SellerListings } from "@/components/listings/SellerListings";
 import { useAuthStore } from "@/store/auth";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 
@@ -72,12 +73,12 @@ export default function ListingDetailPage() {
   const fomoCount = listing.likes_count;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
       <Link href="/listings" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-4">
         <ArrowLeft className="w-4 h-4" /> {t("detail_back")}
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
         {/* Left: Images + Details */}
         <div className="lg:col-span-2">
           {/* Main image */}
@@ -207,14 +208,24 @@ export default function ListingDetailPage() {
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <User className="w-4 h-4" /> {t("detail_seller")}
               </h3>
-              <p className="font-medium text-gray-800">
-                {listing.seller.company_name || listing.seller.name}
-              </p>
-              {listing.seller.canton && (
-                <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                  <MapPin className="w-3.5 h-3.5" /> {listing.seller.canton}
-                </p>
-              )}
+              <Link
+                href={`/sellers/${listing.seller_id}`}
+                className="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50 px-3 py-2.5 transition-all duration-200"
+              >
+                <div>
+                  <p className="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors text-sm">
+                    {listing.seller.company_name || listing.seller.name}
+                  </p>
+                  {listing.seller.canton && (
+                    <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                      <MapPin className="w-3 h-3" /> {listing.seller.canton}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-primary-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  Profil <ArrowLeft className="w-3 h-3 rotate-180" />
+                </div>
+              </Link>
               {listing.seller.phone && (
                 <a
                   href={`tel:${listing.seller.phone}`}
@@ -288,11 +299,17 @@ export default function ListingDetailPage() {
               )}
             </div>
           )}
+
+          <FinancingCalc priceChf={listing.price_chf} />
         </div>
 
-        {/* Financing calculator — right column, below seller card */}
-        <div className="space-y-4">
-          <FinancingCalc priceChf={listing.price_chf} />
+        {/* Other Seller Listings */}
+        <div className="lg:col-span-3">
+          <SellerListings
+            sellerId={listing.seller_id}
+            currentListingId={listing.id}
+            sellerName={listing.seller?.company_name || listing.seller?.name}
+          />
         </div>
 
         {/* Seller Reviews — full width */}

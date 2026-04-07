@@ -6,8 +6,8 @@ import { StarRating } from "./StarRating";
 import { ReviewCard, type Review } from "./ReviewCard";
 
 interface ReviewSummary {
-  average_rating: number;
-  total_reviews: number;
+  average: number;
+  count: number;
   distribution: Record<string, number>; // "1" → count, "2" → count, …
 }
 
@@ -146,8 +146,8 @@ export function SellerReviews({ sellerId, currentUserId }: SellerReviewsProps) {
     );
   }
 
-  const totalReviews = summary?.total_reviews ?? 0;
-  const avgRating = summary?.average_rating ?? 0;
+  const totalReviews = summary?.count ?? 0;
+  const avgRating = summary?.average ?? 0;
 
   return (
     <div className="rounded-xl border border-gray-200 p-6 space-y-6">
@@ -189,7 +189,15 @@ export function SellerReviews({ sellerId, currentUserId }: SellerReviewsProps) {
           onSubmit={handleSubmit}
           className="border border-gray-200 rounded-xl p-5 space-y-4"
         >
-          <h3 className="font-medium text-gray-900 text-sm">Bewertung abgeben</h3>
+          <div className="flex items-center gap-2.5 pb-1 border-b border-gray-100">
+            <div className="w-7 h-7 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0 text-amber-400 text-base leading-none select-none">
+              {"★"}
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 text-sm leading-none">Review this seller</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Teile deine Erfahrung mit anderen Käufern</p>
+            </div>
+          </div>
 
           {/* Star picker */}
           <div className="flex items-center gap-3">

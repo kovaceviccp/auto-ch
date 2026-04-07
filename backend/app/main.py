@@ -38,8 +38,9 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api/v1")
 
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+if not settings.USE_SUPABASE:
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 
 @app.get("/health")

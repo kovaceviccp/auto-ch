@@ -54,7 +54,7 @@ export default function HomePage() {
             {t("home_badge")}
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold mb-5 leading-tight animate-fade-in stagger-1">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-5 leading-tight animate-fade-in stagger-1">
             {t("home_h1_1")}<br />
             <span className="text-primary-300-safe">{t("home_h1_2")}</span>{" "}
             <span className="text-white">{t("home_h1_3")}</span>
@@ -69,11 +69,11 @@ export default function HomePage() {
           </div>
 
           {/* Stats */}
-          <div className="flex justify-center gap-10 mt-10 animate-fade-in stagger-4">
+          <div className="flex justify-center gap-6 sm:gap-10 mt-8 animate-fade-in stagger-4">
             {stats.map((s) => (
               <div key={s.label} className="text-center">
-                <div className="text-3xl font-bold text-white">{s.value}</div>
-                <div className="text-primary-300-safe text-xs mt-0.5 uppercase tracking-wide">{s.label}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-white">{s.value}</div>
+                <div className="text-primary-300-safe text-[10px] sm:text-xs mt-0.5 uppercase tracking-wide">{s.label}</div>
               </div>
             ))}
           </div>

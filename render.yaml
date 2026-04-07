@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: autoch-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_SYNC
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: REDIS_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: USE_SUPABASE
+        value: "true"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: "autoch-images"

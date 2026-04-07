@@ -6,6 +6,7 @@ import { Providers } from "@/components/Providers";
 import { ToastProvider } from "@/context/ToastContext";
 import { NotificationInit } from "@/components/ui/NotificationInit";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { CompareBar } from "@/components/listings/CompareBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,8 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ToastProvider>
             <NotificationInit />
             <Navbar />
-            <main>{children}</main>
+            <main className="pb-0">{children}</main>
             <ScrollToTop />
+            <CompareBar />
             <footer className="bg-gray-900 text-gray-400 py-12 mt-16">
               <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
