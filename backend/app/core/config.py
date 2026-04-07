@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from pydantic import field_validator
+from typing import List, Any
+import json
 
 
 class Settings(BaseSettings):
@@ -18,6 +20,18 @@ class Settings(BaseSettings):
 
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://frontend:3000"]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors(cls, v: Any) -> List[str]:
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("["):
+                return json.loads(v)
+            return [i.strip() for i in v.split(",")]
+        return v
 
     # Local storage (fallback)
     UPLOAD_DIR: str = "/tmp/uploads"
