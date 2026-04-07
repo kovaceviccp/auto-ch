@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
-from typing import List, Any
+from typing import List
 import json
 
 
@@ -18,20 +17,14 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24h
 
-    # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://frontend:3000"]
+    # CORS — comma-separated or JSON list string
+    CORS_ORIGINS: str = "http://localhost:3000,http://frontend:3000"
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors(cls, v: Any) -> List[str]:
-        if isinstance(v, list):
-            return v
-        if isinstance(v, str):
-            v = v.strip()
-            if v.startswith("["):
-                return json.loads(v)
-            return [i.strip() for i in v.split(",")]
-        return v
+    def get_cors_origins(self) -> List[str]:
+        v = self.CORS_ORIGINS.strip()
+        if v.startswith("["):
+            return json.loads(v)
+        return [i.strip() for i in v.split(",")]
 
     # Local storage (fallback)
     UPLOAD_DIR: str = "/tmp/uploads"
